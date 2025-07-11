@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, User, MapPin, Phone, Briefcase, Mail, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, User, MapPin, Phone, Briefcase } from 'lucide-react';
 import Select from 'react-select';
 
 interface BookingData {
@@ -12,9 +12,16 @@ interface BookingData {
   managerPhone: string;
   attendants: Array<{name: string; phone: string}>;
   equipment: string;
-  clientEmail: string;
-  clientWhatsApp: string;
 }
+
+// Sample client data - this would be replaced with Google Sheets data
+const clientOptions = [
+  { value: 'John Doe', label: 'John Doe' },
+  { value: 'Jane Smith', label: 'Jane Smith' },
+  { value: 'Mike Johnson', label: 'Mike Johnson' },
+  { value: 'Sarah Wilson', label: 'Sarah Wilson' },
+  { value: 'David Brown', label: 'David Brown' },
+];
 
 const attendants = [
   { value: { name: 'Mayur Mane', phone: '9765544093' }, label: 'Mayur Mane (9765544093)' },
@@ -34,9 +41,7 @@ function App() {
     managerName: 'Store Manager',
     managerPhone: '+91 9270271005',
     attendants: [],
-    equipment: '',
-    clientEmail: '',
-    clientWhatsApp: ''
+    equipment: ''
   });
 
   const [showPreview, setShowPreview] = useState(false);
@@ -50,22 +55,8 @@ function App() {
     if (!bookingData.clientContact) newErrors.clientContact = 'Required';
     if (!bookingData.location) newErrors.location = 'Required';
     if (!bookingData.callTime) newErrors.callTime = 'Required';
-    if (!bookingData.clientEmail) newErrors.clientEmail = 'Required';
-    if (!bookingData.clientWhatsApp) newErrors.clientWhatsApp = 'Required';
     if (bookingData.attendants.length === 0) newErrors.attendants = 'Select at least one attendant';
     if (!bookingData.equipment.trim()) newErrors.equipment = 'Equipment list is required';
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (bookingData.clientEmail && !emailRegex.test(bookingData.clientEmail)) {
-      newErrors.clientEmail = 'Invalid email format';
-    }
-
-    // WhatsApp number validation (must start with + and contain only numbers)
-    const phoneRegex = /^\+\d{10,15}$/;
-    if (bookingData.clientWhatsApp && !phoneRegex.test(bookingData.clientWhatsApp)) {
-      newErrors.clientWhatsApp = 'Invalid format (e.g., +1234567890)';
-    }
 
     // Client contact validation
     const contactRegex = /^\d{10}$/;
@@ -83,6 +74,13 @@ function App() {
     // Clear error when user starts typing
     if (errors[name as keyof BookingData]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const handleClientNameChange = (option: any) => {
+    setBookingData(prev => ({ ...prev, clientName: option ? option.value : '' }));
+    if (errors.clientName) {
+      setErrors(prev => ({ ...prev, clientName: undefined }));
     }
   };
 
@@ -145,19 +143,6 @@ Syncequips Team`;
     }
   };
 
-  const handleSendWhatsApp = () => {
-    const message = encodeURIComponent(generateMessage());
-    const whatsappUrl = `https://wa.me/${bookingData.clientWhatsApp.replace('+', '')}?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
-  const handleSendEmail = () => {
-    const subject = encodeURIComponent('Booking Confirmation - Syncequips');
-    const body = encodeURIComponent(generateMessage());
-    const mailtoUrl = `mailto:${bookingData.clientEmail}?subject=${subject}&body=${body}`;
-    window.location.href = mailtoUrl;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
@@ -191,19 +176,20 @@ Syncequips Team`;
                 <User className="inline-block w-4 h-4 mr-2" />
                 Client Name
               </label>
-              <input
-                type="text"
-                name="clientName"
-                value={bookingData.clientName}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.clientName ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter client name"
+              <Select
+                options={clientOptions}
+                onChange={handleClientNameChange}
+                className={`w-full ${errors.clientName ? 'select-error' : ''}`}
+                classNamePrefix="select"
+                placeholder="Select client name"
+                isClearable
               />
               {errors.clientName && (
                 <p className="mt-1 text-sm text-red-500">{errors.clientName}</p>
               )}
+              <p className="mt-1 text-xs text-gray-500">
+                Note: Client names are loaded from Google Sheets. To add new clients, update your Google Sheet.
+              </p>
             </div>
 
             {/* 3. Client Contact Number */}
@@ -318,49 +304,6 @@ Syncequips Team`;
                 <p className="mt-1 text-sm text-red-500">{errors.equipment}</p>
               )}
             </div>
-
-            {/* Client Email and WhatsApp */}
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Mail className="inline-block w-4 h-4 mr-2" />
-                  Client Email
-                </label>
-                <input
-                  type="email"
-                  name="clientEmail"
-                  value={bookingData.clientEmail}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.clientEmail ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter client email"
-                />
-                {errors.clientEmail && (
-                  <p className="mt-1 text-sm text-red-500">{errors.clientEmail}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <MessageSquare className="inline-block w-4 h-4 mr-2" />
-                  Client WhatsApp
-                </label>
-                <input
-                  type="tel"
-                  name="clientWhatsApp"
-                  value={bookingData.clientWhatsApp}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.clientWhatsApp ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter WhatsApp number (e.g., +1234567890)"
-                />
-                {errors.clientWhatsApp && (
-                  <p className="mt-1 text-sm text-red-500">{errors.clientWhatsApp}</p>
-                )}
-              </div>
-            </div>
           </div>
 
           <div className="mt-8 flex justify-center gap-4">
@@ -393,18 +336,6 @@ Syncequips Team`;
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 Copy to Clipboard
-              </button>
-              <button
-                onClick={handleSendWhatsApp}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                Send via WhatsApp
-              </button>
-              <button
-                onClick={handleSendEmail}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Send via Email
               </button>
             </div>
           </div>
