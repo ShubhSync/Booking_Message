@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, User, MapPin, Phone, Briefcase, Mail, MessageSquare } from 'lucide-react';
+import { Calendar, Clock, User, FileText, MapPin, Phone, Briefcase, Mail, MessageSquare } from 'lucide-react';
 import Select from 'react-select';
 
 interface BookingData {
   bookingDate: string;
   clientName: string;
+  idType: string;
+  clientId: string;
   location: string;
   callTime: string;
   managerName: string;
@@ -15,6 +17,13 @@ interface BookingData {
   clientEmail: string;
   clientWhatsApp: string;
 }
+
+const idTypes = [
+  { value: 'passport', label: 'Passport' },
+  { value: 'driving', label: "Driver's License" },
+  { value: 'aadhaar', label: 'Aadhaar Card' },
+  { value: 'pan', label: 'PAN Card' }
+];
 
 const managers = [
   { value: { name: 'Satya', phone: '+1234567890' }, label: 'Satya' },
@@ -41,6 +50,8 @@ function App() {
   const [bookingData, setBookingData] = useState<BookingData>({
     bookingDate: '',
     clientName: '',
+    idType: 'passport',
+    clientId: '',
     location: '',
     callTime: '',
     managerName: '',
@@ -60,6 +71,7 @@ function App() {
     
     if (!bookingData.bookingDate) newErrors.bookingDate = 'Required';
     if (!bookingData.clientName) newErrors.clientName = 'Required';
+    if (!bookingData.clientId) newErrors.clientId = 'Required';
     if (!bookingData.location) newErrors.location = 'Required';
     if (!bookingData.callTime) newErrors.callTime = 'Required';
     if (!bookingData.clientEmail) newErrors.clientEmail = 'Required';
@@ -89,6 +101,10 @@ function App() {
     if (errors[name as keyof BookingData]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const handleIdTypeChange = (option: any) => {
+    setBookingData(prev => ({ ...prev, idType: option.value }));
   };
 
   const handleManagerChange = (option: any) => {
@@ -126,6 +142,7 @@ function App() {
 
 Date: ${bookingData.bookingDate}
 Client Name: ${bookingData.clientName}
+${bookingData.idType.toUpperCase()}: ${bookingData.clientId}
 
 Location: ${bookingData.location}
 Call Time: ${bookingData.callTime}
@@ -244,6 +261,40 @@ Syncequips Team`;
                 />
                 {errors.clientName && (
                   <p className="mt-1 text-sm text-red-500">{errors.clientName}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <FileText className="inline-block w-4 h-4 mr-2" />
+                  ID Type
+                </label>
+                <Select
+                  options={idTypes}
+                  value={idTypes.find(type => type.value === bookingData.idType)}
+                  onChange={handleIdTypeChange}
+                  className="w-full"
+                  classNamePrefix="select"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <FileText className="inline-block w-4 h-4 mr-2" />
+                  ID Number
+                </label>
+                <input
+                  type="text"
+                  name="clientId"
+                  value={bookingData.clientId}
+                  onChange={handleInputChange}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    errors.clientId ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder={`Enter ${bookingData.idType} number`}
+                />
+                {errors.clientId && (
+                  <p className="mt-1 text-sm text-red-500">{errors.clientId}</p>
                 )}
               </div>
 
