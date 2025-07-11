@@ -173,19 +173,16 @@ Syncequips Team`;
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleSendToAttendants = () => {
-    if (bookingData.attendants.length === 0) {
-      alert('Please select at least one attendant to send WhatsApp message');
+  const handleSendToAttendant = (attendantIndex: number) => {
+    if (bookingData.attendants.length <= attendantIndex) {
+      alert(`Attendant ${attendantIndex + 1} is not selected`);
       return;
     }
     
+    const attendant = bookingData.attendants[attendantIndex];
     const message = encodeURIComponent(generateMessage());
-    
-    // Send to each selected attendant
-    bookingData.attendants.forEach(attendant => {
-      const whatsappUrl = `https://wa.me/91${attendant.phone}?text=${message}`;
-      window.open(whatsappUrl, '_blank');
-    });
+    const whatsappUrl = `https://wa.me/91${attendant.phone}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (
@@ -406,7 +403,7 @@ Syncequips Team`;
             <pre className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-sm">
               {generateMessage()}
             </pre>
-            <div className="mt-4 flex flex-wrap gap-4">
+            <div className="mt-4 flex flex-wrap gap-3">
               <button
                 onClick={() => navigator.clipboard.writeText(generateMessage())}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
@@ -420,13 +417,27 @@ Syncequips Team`;
               >
                 Send to Client on WhatsApp
               </button>
-              <button
-                onClick={handleSendToAttendants}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                disabled={bookingData.attendants.length === 0}
-              >
-                Send to On-set Attendant
-              </button>
+              
+              {/* Individual Attendant Buttons */}
+              {[0, 1, 2, 3, 4].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSendToAttendant(index)}
+                  className={`px-4 py-2 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    bookingData.attendants.length > index
+                      ? 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  disabled={bookingData.attendants.length <= index}
+                  title={
+                    bookingData.attendants.length > index
+                      ? `Send to ${bookingData.attendants[index].name}`
+                      : `Attendant ${index + 1} not selected`
+                  }
+                >
+                  Send to Attendant {index + 1}
+                </button>
+              ))}
             </div>
           </div>
         )}
