@@ -5,49 +5,36 @@ import Select from 'react-select';
 interface BookingData {
   bookingDate: string;
   clientName: string;
+  clientContact: string;
   location: string;
   callTime: string;
   managerName: string;
   managerPhone: string;
-  attendantName: string;
-  attendantPhone: string;
-  equipment: string[];
+  attendants: Array<{name: string; phone: string}>;
+  equipment: string;
   clientEmail: string;
   clientWhatsApp: string;
 }
 
-const managers = [
-  { value: { name: 'Satya', phone: '+1234567890' }, label: 'Satya' },
-  { value: { name: 'Pawan', phone: '+1234567891' }, label: 'Pawan' },
-  { value: { name: 'Mike Johnson', phone: '+1234567892' }, label: 'Mike Johnson' }
-];
-
 const attendants = [
-  { value: { name: 'Mayur', phone: '+1234567893' }, label: 'Mayur' },
-  { value: { name: 'Raunak', phone: '+1234567894' }, label: 'Raunak' },
-  { value: { name: 'Tom Davis', phone: '+1234567895' }, label: 'Tom Davis' }
-];
-
-const equipmentList = [
-  { value: 'Camera Sony FX3', label: 'Camera Sony FX3' },
-  { value: 'Lens Sony 24-70GMii', label: 'Lens Sony 24-70GMii' },
-  { value: 'LED Light Panel 1x1', label: 'LED Light Panel 1x1' },
-  { value: 'Wireless Mic Set', label: 'Wireless Mic Set' },
-  { value: 'Tripod Manfrotto', label: 'Tripod Manfrotto' },
-  { value: 'DJI Ronin RS3', label: 'DJI Ronin RS3' }
+  { value: { name: 'Mayur Mane', phone: '9765544093' }, label: 'Mayur Mane (9765544093)' },
+  { value: { name: 'Durgesh', phone: '9407488091' }, label: 'Durgesh (9407488091)' },
+  { value: { name: 'Sahil', phone: '9927859682' }, label: 'Sahil (9927859682)' },
+  { value: { name: 'Rahul', phone: '8308848541' }, label: 'Rahul (8308848541)' },
+  { value: { name: 'PK', phone: '9356846410' }, label: 'PK (9356846410)' }
 ];
 
 function App() {
   const [bookingData, setBookingData] = useState<BookingData>({
     bookingDate: '',
     clientName: '',
+    clientContact: '',
     location: '',
     callTime: '',
-    managerName: '',
-    managerPhone: '',
-    attendantName: '',
-    attendantPhone: '',
-    equipment: [],
+    managerName: 'Store Manager',
+    managerPhone: '+91 9270271005',
+    attendants: [],
+    equipment: '',
     clientEmail: '',
     clientWhatsApp: ''
   });
@@ -60,11 +47,13 @@ function App() {
     
     if (!bookingData.bookingDate) newErrors.bookingDate = 'Required';
     if (!bookingData.clientName) newErrors.clientName = 'Required';
+    if (!bookingData.clientContact) newErrors.clientContact = 'Required';
     if (!bookingData.location) newErrors.location = 'Required';
     if (!bookingData.callTime) newErrors.callTime = 'Required';
     if (!bookingData.clientEmail) newErrors.clientEmail = 'Required';
     if (!bookingData.clientWhatsApp) newErrors.clientWhatsApp = 'Required';
-    if (bookingData.equipment.length === 0) newErrors.equipment = 'Select at least one item';
+    if (bookingData.attendants.length === 0) newErrors.attendants = 'Select at least one attendant';
+    if (!bookingData.equipment.trim()) newErrors.equipment = 'Equipment list is required';
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,6 +65,12 @@ function App() {
     const phoneRegex = /^\+\d{10,15}$/;
     if (bookingData.clientWhatsApp && !phoneRegex.test(bookingData.clientWhatsApp)) {
       newErrors.clientWhatsApp = 'Invalid format (e.g., +1234567890)';
+    }
+
+    // Client contact validation
+    const contactRegex = /^\d{10}$/;
+    if (bookingData.clientContact && !contactRegex.test(bookingData.clientContact)) {
+      newErrors.clientContact = 'Invalid format (10 digits required)';
     }
 
     setErrors(newErrors);
@@ -91,41 +86,24 @@ function App() {
     }
   };
 
-  const handleManagerChange = (option: any) => {
-    if (option) {
-      setBookingData(prev => ({
-        ...prev,
-        managerName: option.value.name,
-        managerPhone: option.value.phone
-      }));
-    }
-  };
-
-  const handleAttendantChange = (option: any) => {
-    if (option) {
-      setBookingData(prev => ({
-        ...prev,
-        attendantName: option.value.name,
-        attendantPhone: option.value.phone
-      }));
-    }
-  };
-
-  const handleEquipmentChange = (options: any) => {
+  const handleAttendantsChange = (options: any) => {
     setBookingData(prev => ({
       ...prev,
-      equipment: options.map((option: any) => option.value)
+      attendants: options ? options.map((option: any) => option.value) : []
     }));
-    if (errors.equipment) {
-      setErrors(prev => ({ ...prev, equipment: undefined }));
+    if (errors.attendants) {
+      setErrors(prev => ({ ...prev, attendants: undefined }));
     }
   };
 
   const generateMessage = () => {
+    const attendantsList = bookingData.attendants.map(att => `${att.name}: ${att.phone}`).join('\n');
+    
     return `BOOKING CONFIRMATION
 
 Date: ${bookingData.bookingDate}
 Client Name: ${bookingData.clientName}
+Client Contact: ${bookingData.clientContact}
 
 Location: ${bookingData.location}
 Call Time: ${bookingData.callTime}
@@ -134,12 +112,11 @@ Store Manager:
 ${bookingData.managerName}
 ${bookingData.managerPhone}
 
-On-Set Attendant:
-${bookingData.attendantName}
-${bookingData.attendantPhone}
+On-Set Attendant(s):
+${attendantsList}
 
 Equipment List:
-${bookingData.equipment.map(item => `- ${item}`).join('\n')}
+${bookingData.equipment}
 
 Terms and Conditions:
 
@@ -188,85 +165,162 @@ Syncequips Team`;
           <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Booking Message Generator</h1>
           
           <div className="space-y-6">
+            {/* 1. Booking Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Calendar className="inline-block w-4 h-4 mr-2" />
+                Booking Date
+              </label>
+              <input
+                type="date"
+                name="bookingDate"
+                value={bookingData.bookingDate}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.bookingDate ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.bookingDate && (
+                <p className="mt-1 text-sm text-red-500">{errors.bookingDate}</p>
+              )}
+            </div>
+
+            {/* 2. Client Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <User className="inline-block w-4 h-4 mr-2" />
+                Client Name
+              </label>
+              <input
+                type="text"
+                name="clientName"
+                value={bookingData.clientName}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.clientName ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter client name"
+              />
+              {errors.clientName && (
+                <p className="mt-1 text-sm text-red-500">{errors.clientName}</p>
+              )}
+            </div>
+
+            {/* 3. Client Contact Number */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Phone className="inline-block w-4 h-4 mr-2" />
+                Client Contact Number
+              </label>
+              <input
+                type="tel"
+                name="clientContact"
+                value={bookingData.clientContact}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.clientContact ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter 10-digit contact number"
+              />
+              {errors.clientContact && (
+                <p className="mt-1 text-sm text-red-500">{errors.clientContact}</p>
+              )}
+            </div>
+
+            {/* 4. Shoot Location */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <MapPin className="inline-block w-4 h-4 mr-2" />
+                Shoot Location
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={bookingData.location}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.location ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Enter shoot location"
+              />
+              {errors.location && (
+                <p className="mt-1 text-sm text-red-500">{errors.location}</p>
+              )}
+            </div>
+
+            {/* 5. Call Time */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Clock className="inline-block w-4 h-4 mr-2" />
+                Call Time
+              </label>
+              <input
+                type="time"
+                name="callTime"
+                value={bookingData.callTime}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.callTime ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.callTime && (
+                <p className="mt-1 text-sm text-red-500">{errors.callTime}</p>
+              )}
+            </div>
+
+            {/* 6. Store Manager */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <User className="inline-block w-4 h-4 mr-2" />
+                Store Manager
+              </label>
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                Store Manager: +91 9270271005
+              </div>
+            </div>
+
+            {/* 7. On-Set Attendant */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <User className="inline-block w-4 h-4 mr-2" />
+                On-Set Attendant(s)
+              </label>
+              <Select
+                isMulti
+                options={attendants}
+                onChange={handleAttendantsChange}
+                className={`w-full ${errors.attendants ? 'select-error' : ''}`}
+                classNamePrefix="select"
+                placeholder="Select on-set attendant(s)"
+              />
+              {errors.attendants && (
+                <p className="mt-1 text-sm text-red-500">{errors.attendants}</p>
+              )}
+            </div>
+
+            {/* 8. Equipment List */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <Briefcase className="inline-block w-4 h-4 mr-2" />
+                Equipment List
+              </label>
+              <textarea
+                name="equipment"
+                value={bookingData.equipment}
+                onChange={handleInputChange}
+                rows={6}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.equipment ? 'border-red-500' : 'border-gray-300'
+                }`}
+                placeholder="Paste or type the equipment list here..."
+              />
+              {errors.equipment && (
+                <p className="mt-1 text-sm text-red-500">{errors.equipment}</p>
+              )}
+            </div>
+
+            {/* Client Email and WhatsApp */}
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Calendar className="inline-block w-4 h-4 mr-2" />
-                  Booking Date
-                </label>
-                <input
-                  type="date"
-                  name="bookingDate"
-                  value={bookingData.bookingDate}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.bookingDate ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.bookingDate && (
-                  <p className="mt-1 text-sm text-red-500">{errors.bookingDate}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <Clock className="inline-block w-4 h-4 mr-2" />
-                  Call Time
-                </label>
-                <input
-                  type="time"
-                  name="callTime"
-                  value={bookingData.callTime}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.callTime ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.callTime && (
-                  <p className="mt-1 text-sm text-red-500">{errors.callTime}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <User className="inline-block w-4 h-4 mr-2" />
-                  Client Name
-                </label>
-                <input
-                  type="text"
-                  name="clientName"
-                  value={bookingData.clientName}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.clientName ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter client name"
-                />
-                {errors.clientName && (
-                  <p className="mt-1 text-sm text-red-500">{errors.clientName}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <MapPin className="inline-block w-4 h-4 mr-2" />
-                  Shoot Location
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={bookingData.location}
-                  onChange={handleInputChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.location ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Enter shoot location"
-                />
-                {errors.location && (
-                  <p className="mt-1 text-sm text-red-500">{errors.location}</p>
-                )}
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <Mail className="inline-block w-4 h-4 mr-2" />
@@ -306,54 +360,6 @@ Syncequips Team`;
                   <p className="mt-1 text-sm text-red-500">{errors.clientWhatsApp}</p>
                 )}
               </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <User className="inline-block w-4 h-4 mr-2" />
-                  Store Manager
-                </label>
-                <Select
-                  options={managers}
-                  onChange={handleManagerChange}
-                  className="w-full"
-                  classNamePrefix="select"
-                  placeholder="Select store manager"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  <User className="inline-block w-4 h-4 mr-2" />
-                  On-Set Attendant
-                </label>
-                <Select
-                  options={attendants}
-                  onChange={handleAttendantChange}
-                  className="w-full"
-                  classNamePrefix="select"
-                  placeholder="Select on-set attendant"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                <Briefcase className="inline-block w-4 h-4 mr-2" />
-                Equipment List
-              </label>
-              <Select
-                isMulti
-                options={equipmentList}
-                onChange={handleEquipmentChange}
-                className={`w-full ${errors.equipment ? 'select-error' : ''}`}
-                classNamePrefix="select"
-                placeholder="Select equipment"
-              />
-              {errors.equipment && (
-                <p className="mt-1 text-sm text-red-500">{errors.equipment}</p>
-              )}
             </div>
           </div>
 
