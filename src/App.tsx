@@ -314,7 +314,7 @@ Syncequips Team`;
                 Store/Office Contact
               </label>
               <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
-                Store/Office Contact: +91 9270271005
+                +91 9270271005
               </div>
             </div>
 
