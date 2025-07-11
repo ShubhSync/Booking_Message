@@ -8,9 +8,11 @@ interface BookingData {
   clientContact: string;
   location: string;
   callTime: string;
+  callTimeOption: string;
   managerName: string;
   managerPhone: string;
   attendants: Array<{name: string; phone: string}>;
+  attendantReportingTime: string;
   equipment: string;
 }
 
@@ -31,6 +33,11 @@ const attendants = [
   { value: { name: 'PK', phone: '9356846410' }, label: 'PK (9356846410)' }
 ];
 
+const callTimeOptions = [
+  { value: 'fixed', label: 'Fixed Time' },
+  { value: 'to_be_updated', label: 'To be updated by client' }
+];
+
 function App() {
   const [bookingData, setBookingData] = useState<BookingData>({
     bookingDate: '',
@@ -38,9 +45,11 @@ function App() {
     clientContact: '',
     location: '',
     callTime: '',
+    callTimeOption: 'fixed',
     managerName: 'Store/Office Contact',
     managerPhone: '+91 9270271005',
     attendants: [],
+    attendantReportingTime: '',
     equipment: ''
   });
 
@@ -54,8 +63,9 @@ function App() {
     if (!bookingData.clientName) newErrors.clientName = 'Required';
     if (!bookingData.clientContact) newErrors.clientContact = 'Required';
     if (!bookingData.location) newErrors.location = 'Required';
-    if (!bookingData.callTime) newErrors.callTime = 'Required';
+    if (bookingData.callTimeOption === 'fixed' && !bookingData.callTime) newErrors.callTime = 'Required when fixed time is selected';
     if (bookingData.attendants.length === 0) newErrors.attendants = 'Select at least one attendant';
+    if (!bookingData.attendantReportingTime) newErrors.attendantReportingTime = 'Required';
     if (!bookingData.equipment.trim()) newErrors.equipment = 'Equipment list is required';
 
     // Client contact validation
@@ -84,6 +94,13 @@ function App() {
     }
   };
 
+  const handleCallTimeOptionChange = (option: any) => {
+    setBookingData(prev => ({ ...prev, callTimeOption: option ? option.value : 'fixed' }));
+    if (errors.callTime) {
+      setErrors(prev => ({ ...prev, callTime: undefined }));
+    }
+  };
+
   const handleAttendantsChange = (options: any) => {
     setBookingData(prev => ({
       ...prev,
@@ -96,6 +113,7 @@ function App() {
 
   const generateMessage = () => {
     const attendantsList = bookingData.attendants.map(att => `${att.name}: ${att.phone}`).join('\n');
+    const callTimeDisplay = bookingData.callTimeOption === 'to_be_updated' ? 'To be updated by client' : bookingData.callTime;
     
     return `BOOKING CONFIRMATION
 
@@ -104,7 +122,7 @@ Client Name: ${bookingData.clientName}
 Client Contact: ${bookingData.clientContact}
 
 Location: ${bookingData.location}
-Call Time: ${bookingData.callTime}
+Call Time: ${callTimeDisplay}
 
 Store/Office Contact:
 ${bookingData.managerName}
@@ -112,6 +130,8 @@ ${bookingData.managerPhone}
 
 On-Set Attendant(s):
 ${attendantsList}
+
+Attendant Office Reporting Time: ${bookingData.attendantReportingTime}
 
 Equipment List:
 ${bookingData.equipment}
@@ -265,15 +285,26 @@ Syncequips Team`;
                 <Clock className="inline-block w-4 h-4 mr-2" />
                 Call Time
               </label>
-              <input
-                type="time"
-                name="callTime"
-                value={bookingData.callTime}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  errors.callTime ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Select
+                  options={callTimeOptions}
+                  value={callTimeOptions.find(option => option.value === bookingData.callTimeOption)}
+                  onChange={handleCallTimeOptionChange}
+                  className="w-full"
+                  classNamePrefix="select"
+                />
+                {bookingData.callTimeOption === 'fixed' && (
+                  <input
+                    type="time"
+                    name="callTime"
+                    value={bookingData.callTime}
+                    onChange={handleInputChange}
+                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.callTime ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                )}
+              </div>
               {errors.callTime && (
                 <p className="mt-1 text-sm text-red-500">{errors.callTime}</p>
               )}
@@ -309,7 +340,27 @@ Syncequips Team`;
               )}
             </div>
 
-            {/* 8. Equipment List */}
+            {/* 8. Attendant Office Reporting Time */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                <Clock className="inline-block w-4 h-4 mr-2" />
+                Attendant Office Reporting Time
+              </label>
+              <input
+                type="time"
+                name="attendantReportingTime"
+                value={bookingData.attendantReportingTime}
+                onChange={handleInputChange}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.attendantReportingTime ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.attendantReportingTime && (
+                <p className="mt-1 text-sm text-red-500">{errors.attendantReportingTime}</p>
+              )}
+            </div>
+
+            {/* 9. Equipment List */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Briefcase className="inline-block w-4 h-4 mr-2" />
