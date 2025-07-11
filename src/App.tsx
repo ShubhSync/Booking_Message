@@ -38,7 +38,7 @@ function App() {
     clientContact: '',
     location: '',
     callTime: '',
-    managerName: 'Store Manager',
+    managerName: 'Store/Office Contact',
     managerPhone: '+91 9270271005',
     attendants: [],
     equipment: ''
@@ -106,7 +106,7 @@ Client Contact: ${bookingData.clientContact}
 Location: ${bookingData.location}
 Call Time: ${bookingData.callTime}
 
-Store Manager:
+Store/Office Contact:
 ${bookingData.managerName}
 ${bookingData.managerPhone}
 
@@ -141,6 +141,31 @@ Syncequips Team`;
     if (validateForm()) {
       setShowPreview(true);
     }
+  };
+
+  const handleSendToClient = () => {
+    if (!bookingData.clientContact) {
+      alert('Client contact number is required to send WhatsApp message');
+      return;
+    }
+    const message = encodeURIComponent(generateMessage());
+    const whatsappUrl = `https://wa.me/91${bookingData.clientContact}?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleSendToAttendants = () => {
+    if (bookingData.attendants.length === 0) {
+      alert('Please select at least one attendant to send WhatsApp message');
+      return;
+    }
+    
+    const message = encodeURIComponent(generateMessage());
+    
+    // Send to each selected attendant
+    bookingData.attendants.forEach(attendant => {
+      const whatsappUrl = `https://wa.me/91${attendant.phone}?text=${message}`;
+      window.open(whatsappUrl, '_blank');
+    });
   };
 
   return (
@@ -254,14 +279,14 @@ Syncequips Team`;
               )}
             </div>
 
-            {/* 6. Store Manager */}
+            {/* 6. Store/Office Contact */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 <User className="inline-block w-4 h-4 mr-2" />
-                Store Manager
+                Store/Office Contact
               </label>
               <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
-                Store Manager: +91 9270271005
+                Store/Office Contact: +91 9270271005
               </div>
             </div>
 
@@ -330,12 +355,26 @@ Syncequips Team`;
             <pre className="whitespace-pre-wrap bg-gray-50 p-4 rounded-md text-sm">
               {generateMessage()}
             </pre>
-            <div className="mt-4 flex gap-4">
+            <div className="mt-4 flex flex-wrap gap-4">
               <button
                 onClick={() => navigator.clipboard.writeText(generateMessage())}
                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
                 Copy to Clipboard
+              </button>
+              <button
+                onClick={handleSendToClient}
+                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                disabled={!bookingData.clientContact}
+              >
+                Send to Client on WhatsApp
+              </button>
+              <button
+                onClick={handleSendToAttendants}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                disabled={bookingData.attendants.length === 0}
+              >
+                Send to On-set Attendant
               </button>
             </div>
           </div>
